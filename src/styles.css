@@ -1,0 +1,1498 @@
+/*
+ * Katex Playground styles.
+ *
+ * Theming: every colour is a CSS variable. The resolved theme is set on
+ * <html data-theme="light|dark"> by lib/theme.ts. Before JavaScript runs (or
+ * if it never does) the prefers-color-scheme media query picks the palette.
+ */
+
+/* ───────────────────────────────────────────────────────── theme tokens */
+
+:root,
+:root[data-theme="light"] {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #eef0f3;
+  --border: #dde1e6;
+  --text: #1d2129;
+  --muted: #6b7280;
+  --accent: #3b5bdb;
+  --accent-text: #ffffff;
+  --accent-soft: #e6ebff;
+  --danger: #c92a2a;
+  --warning: #b45309;
+  --success: #2f855a;
+  --shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 4px 16px rgb(0 0 0 / 6%);
+
+  --paper: #ffffff;
+  --paper-text: #16181d;
+  --paper-rule: #d4d8de;
+  --link: #2948c7;
+
+  --caret: #1d2129;
+  --selection: rgb(59 91 219 / 22%);
+  --active-line: rgb(0 0 0 / 3.5%);
+  --gutter-text: #a3a9b3;
+
+  --t-cmd: #2f4ac0;
+  --t-env: #0b7a75;
+  --t-comment: #8b929c;
+  --t-delim: #c2410c;
+  --t-math: #9a3412;
+  --t-math-bg: rgb(234 88 12 / 6%);
+  --t-brace: #7c3aed;
+  --t-bracket: #6b7280;
+  --t-special: #be123c;
+  --t-num: #0f766e;
+  --t-esc: #a16207;
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #121418;
+  --surface: #1a1d23;
+  --surface-2: #23272f;
+  --border: #2e333d;
+  --text: #e4e7ec;
+  --muted: #9198a4;
+  --accent: #8ea2ff;
+  --accent-text: #0e1220;
+  --accent-soft: rgb(142 162 255 / 16%);
+  --danger: #ff8787;
+  --warning: #fbbf24;
+  --success: #68d391;
+  --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 30%);
+
+  --paper: #1a1d23;
+  --paper-text: #e4e7ec;
+  --paper-rule: #3a404b;
+  --link: #9db0ff;
+
+  --caret: #e4e7ec;
+  --selection: rgb(142 162 255 / 28%);
+  --active-line: rgb(255 255 255 / 4%);
+  --gutter-text: #5b626e;
+
+  --t-cmd: #8ab4ff;
+  --t-env: #5eead4;
+  --t-comment: #6b7280;
+  --t-delim: #fb923c;
+  --t-math: #fdba74;
+  --t-math-bg: rgb(251 146 60 / 7%);
+  --t-brace: #c4a5ff;
+  --t-bracket: #9198a4;
+  --t-special: #fb7185;
+  --t-num: #5eead4;
+  --t-esc: #fcd34d;
+
+  color-scheme: dark;
+}
+
+/* No-JS / pre-hydration fallback: follow the OS. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #121418;
+    --surface: #1a1d23;
+    --text: #e4e7ec;
+    --paper: #1a1d23;
+    --paper-text: #e4e7ec;
+    color-scheme: dark;
+  }
+}
+
+/* ───────────────────────────────────────────────────────── base */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+kbd {
+  font: 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  padding: 2px 4px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* ───────────────────────────────────────────────────────── shared controls */
+
+.btn,
+.tool-btn,
+.menu-button,
+.icon-btn {
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 6px;
+  padding: 4px 8px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.btn {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.btn.primary kbd {
+  background: transparent;
+  border-color: currentColor;
+  color: inherit;
+  opacity: 0.8;
+}
+
+.btn:hover,
+.tool-btn:hover,
+.menu-button:hover,
+.icon-btn:hover {
+  background: var(--surface-2);
+}
+
+.btn.primary:hover {
+  background: var(--accent);
+  filter: brightness(1.08);
+}
+
+.icon-btn {
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 8px;
+  color: var(--muted);
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 2px;
+  background: var(--surface-2);
+  gap: 2px;
+}
+
+.segmented > button,
+.segmented > label {
+  border: 0;
+  background: transparent;
+  border-radius: 5px;
+  padding: 3px 12px;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.segmented > .on {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+}
+
+.segmented input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmented label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+}
+
+/* ───────────────────────────────────────────────────────── layout */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.logo {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font: italic 17px/1 Georgia, "Times New Roman", serif;
+}
+
+.doc-name {
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 6px;
+  padding: 4px 8px;
+  min-width: 80px;
+  width: 22ch;
+  font-weight: 500;
+}
+
+.doc-name:hover {
+  border-color: var(--border);
+}
+
+.doc-name:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  outline: none;
+}
+
+.header-spacer {
+  flex: 1;
+}
+
+.view-switch {
+  display: none;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.toolbar-sep {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 6px;
+}
+
+.tool-btn {
+  flex: none;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.tool-btn.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.action-bold {
+  font-weight: 700;
+}
+
+.action-italic {
+  font-style: italic;
+  font-family: Georgia, serif;
+}
+
+.action-inline-math,
+.action-display-math {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.quick-symbols {
+  display: flex;
+  gap: 1px;
+}
+
+.symbol-btn {
+  flex: none;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 5px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  display: inline-grid;
+  place-items: center;
+  font-size: 13px;
+}
+
+.symbol-btn:hover {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
+.symbol-btn .katex {
+  font-size: 1.05em;
+}
+
+.main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.panes {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
+.pane {
+  min-width: 0;
+  min-height: 0;
+}
+
+.source-pane {
+  flex: 0 0 50%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--surface);
+}
+
+.preview-pane {
+  flex: 1;
+  overflow: auto;
+  background: var(--bg);
+}
+
+.divider {
+  flex: none;
+  width: 6px;
+  cursor: col-resize;
+  background: var(--border);
+  background-clip: content-box;
+  padding: 0 2.5px;
+  touch-action: none;
+}
+
+.divider:hover,
+.divider:focus-visible {
+  background: var(--accent);
+  padding: 0 2px;
+}
+
+/* ───────────────────────────────────────────────────────── editor */
+
+.editor {
+  --gutter: 16px;
+  --pad: 14px;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  position: relative;
+}
+
+.editor.with-gutter {
+  --gutter: 52px;
+}
+
+.editor-scroll {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+  scrollbar-width: thin;
+}
+
+.editor-inner {
+  position: relative;
+  min-height: 100%;
+}
+
+/* These two layers MUST share every property that affects text layout. */
+.editor-highlight,
+.editor-input {
+  margin: 0;
+  border: 0;
+  font-family: var(--mono);
+  font-size: var(--editor-font-size, 14px);
+  line-height: 1.6;
+  letter-spacing: normal;
+  font-variant-ligatures: none;
+  font-kerning: none;
+  tab-size: 4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.editor-highlight {
+  padding: var(--pad) var(--pad) 40vh 0;
+  color: var(--text);
+  pointer-events: none;
+  counter-reset: line;
+}
+
+.editor-highlight .ln {
+  position: relative;
+  padding-left: var(--gutter);
+  counter-increment: line;
+}
+
+.with-gutter .editor-highlight .ln::before {
+  content: counter(line);
+  position: absolute;
+  left: 0;
+  width: calc(var(--gutter) - 16px);
+  text-align: right;
+  color: var(--gutter-text);
+  font-size: 0.85em;
+}
+
+.editor-highlight .ln.active {
+  background: var(--active-line);
+}
+
+.with-gutter .editor-highlight .ln.active::before {
+  color: var(--text);
+}
+
+.editor-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: var(--pad) var(--pad) 40vh var(--gutter);
+  background: transparent;
+  color: transparent;
+  caret-color: var(--caret);
+  resize: none;
+  outline: none;
+  overflow: hidden;
+}
+
+.editor-input::selection {
+  background: var(--selection);
+  color: transparent;
+}
+
+/* Token colours. `.m` (math) comes first so token types override its colour. */
+.m {
+  color: var(--t-math);
+  background: var(--t-math-bg);
+}
+.t-cmd {
+  color: var(--t-cmd);
+}
+.t-env {
+  color: var(--t-env);
+}
+.t-comment {
+  color: var(--t-comment);
+}
+.t-delim {
+  color: var(--t-delim);
+}
+.t-brace {
+  color: var(--t-brace);
+}
+.t-bracket {
+  color: var(--t-bracket);
+}
+.t-special {
+  color: var(--t-special);
+}
+.t-num {
+  color: var(--t-num);
+}
+.t-esc {
+  color: var(--t-esc);
+}
+.t-match {
+  /* outline/box-shadow don't affect layout, unlike borders */
+  box-shadow: 0 0 0 1px var(--accent);
+  border-radius: 2px;
+  background: var(--accent-soft);
+}
+
+.completions {
+  position: absolute;
+  z-index: 20;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  min-width: 260px;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  font-size: 13px;
+}
+
+.completions li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.completions li.selected {
+  background: var(--accent-soft);
+}
+
+.completions code {
+  font-family: var(--mono);
+  color: var(--t-cmd);
+}
+
+.completions span {
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ───────────────────────────────────────────────────────── suggestion card */
+
+/* A strip under the editor (not an overlay, so it never hides the text being typed). */
+.suggestion {
+  flex: none;
+  margin: 0 10px 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  animation: rise 0.15s ease-out;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.suggestion-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  min-width: 0;
+}
+
+.suggestion-label {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.suggestion-preview .katex {
+  font-size: 1.1em;
+}
+
+.suggestion-source {
+  font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestion-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* ───────────────────────────────────────────────────────── palette */
+
+.palette {
+  flex: none;
+  width: 264px;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+.palette-head {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.palette-head input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.palette-body {
+  flex: 1;
+  overflow: auto;
+  padding: 4px 8px 16px;
+}
+
+.palette h3 {
+  margin: 12px 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.palette-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.palette-grid .symbol-btn {
+  min-width: 34px;
+  height: 34px;
+}
+
+/* ───────────────────────────────────────────────────────── menus */
+
+.menu {
+  position: relative;
+}
+
+.menu-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  z-index: 30;
+  min-width: 240px;
+  max-height: 70vh;
+  overflow: auto;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.menu-list.align-left {
+  left: 0;
+}
+
+.menu-list.align-right {
+  right: 0;
+}
+
+.menu-list button {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  text-align: left;
+}
+
+.menu-list button:hover,
+.menu-list button:focus-visible {
+  background: var(--surface-2);
+  outline: none;
+}
+
+.menu-list button.checked .menu-label::before {
+  content: "✓ ";
+  color: var(--accent);
+}
+
+.menu-list button.danger {
+  color: var(--danger);
+}
+
+.menu-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-hint {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.menu-heading {
+  padding: 6px 10px 2px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.menu-list hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 4px 0;
+}
+
+/* ───────────────────────────────────────────────────────── status bar */
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 3px 12px;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.issues {
+  position: relative;
+}
+
+.issues-btn {
+  border: 0;
+  background: transparent;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--success);
+}
+
+.issues-btn:disabled {
+  cursor: default;
+}
+
+.issues-btn.has-warnings {
+  color: var(--warning);
+}
+
+.issues-btn.has-errors {
+  color: var(--danger);
+}
+
+.issues-btn:not(:disabled):hover {
+  background: var(--surface-2);
+}
+
+.issues-list {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  width: min(460px, 90vw);
+  max-height: 50vh;
+  overflow: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  white-space: normal;
+}
+
+.issues-list button {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  text-align: left;
+  color: var(--text);
+}
+
+.issues-list button:hover {
+  background: var(--surface-2);
+}
+
+.issues-list button::before {
+  content: "●";
+  font-size: 9px;
+  line-height: 18px;
+}
+
+.issues-list .error::before {
+  color: var(--danger);
+}
+
+.issues-list .warning::before {
+  color: var(--warning);
+}
+
+.issue-loc {
+  flex: none;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.save-status.error {
+  color: var(--danger);
+}
+
+/* ───────────────────────────────────────────────────────── preferences */
+
+dialog.prefs {
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+dialog.prefs::backdrop {
+  background: rgb(0 0 0 / 35%);
+}
+
+.prefs-content {
+  padding: 16px 20px 20px;
+}
+
+.prefs header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.prefs h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.prefs fieldset {
+  border: 0;
+  padding: 0;
+  margin: 18px 0 0;
+}
+
+.prefs legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.prefs .row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.prefs .row > span {
+  flex: 1;
+}
+
+.prefs .row small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.prefs .row input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+.prefs .row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.prefs output {
+  width: 40px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.shortcuts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+  margin: 0;
+}
+
+.shortcuts div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.shortcuts dd {
+  margin: 0;
+  color: var(--muted);
+  text-align: right;
+}
+
+/* ───────────────────────────────────────────────────────── rendered document */
+
+.paper {
+  max-width: 800px;
+  min-height: calc(100% - 48px);
+  margin: 24px auto;
+  padding: 56px 64px 72px;
+  background: var(--paper);
+  color: var(--paper-text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: var(--shadow);
+  /* KaTeX ships Computer Modern-like fonts; reuse them for a LaTeX look. */
+  font-family: KaTeX_Main, "Latin Modern Roman", "Computer Modern", Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+  counter-reset: katexEqnNo mmlEqnNo;
+}
+
+.paper p {
+  margin: 0 0 0.75em;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.paper a {
+  color: var(--link);
+}
+
+.paper h1,
+.paper h2,
+.paper h3,
+.paper h4 {
+  font-weight: 700;
+  line-height: 1.25;
+  break-after: avoid;
+}
+
+.paper h2 {
+  font-size: 1.4em;
+  margin: 1.5em 0 0.6em;
+}
+
+.paper h3 {
+  font-size: 1.18em;
+  margin: 1.3em 0 0.5em;
+}
+
+.paper h4 {
+  font-size: 1em;
+  margin: 1.2em 0 0.4em;
+}
+
+.paper .secnum {
+  margin-right: 0.9em;
+}
+
+.doc-title {
+  text-align: center;
+  margin-bottom: 2em;
+}
+
+.doc-title h1 {
+  font-size: 1.75em;
+  font-weight: 400;
+  margin: 0.4em 0 0.6em;
+}
+
+.doc-author,
+.doc-date {
+  font-size: 1.1em;
+  margin: 0.3em 0;
+}
+
+.author-sep {
+  display: inline-block;
+  width: 2.5em;
+}
+
+.abstract {
+  margin: 0 3em 1.5em;
+  font-size: 0.92em;
+}
+
+.abstract-title {
+  text-align: center;
+  font-weight: 700;
+  margin-bottom: 0.4em;
+}
+
+.paper .katex {
+  font-size: 1.1em;
+}
+
+.paper .katex-display {
+  margin: 0.9em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 0;
+}
+
+.thm {
+  margin: 1em 0;
+}
+
+.thm-italic {
+  font-style: italic;
+}
+
+.thm-italic .katex {
+  font-style: normal;
+}
+
+.thm-head {
+  font-weight: 700;
+  font-style: normal;
+}
+
+.thm-note {
+  font-weight: 400;
+}
+
+.proof {
+  margin: 0.8em 0 1.2em;
+}
+
+.proof-head {
+  font-style: italic;
+}
+
+.qed {
+  float: right;
+  margin-left: 1em;
+}
+
+.paper ul,
+.paper ol,
+.paper dl {
+  margin: 0.4em 0 0.9em;
+  padding-left: 2em;
+}
+
+.paper li > p,
+.paper dd > p {
+  margin: 0.15em 0;
+}
+
+.paper ol ol {
+  list-style-type: lower-alpha;
+}
+
+.paper ol ol ol {
+  list-style-type: lower-roman;
+}
+
+.paper li.custom-label {
+  list-style: none;
+  position: relative;
+}
+
+.paper .item-label {
+  position: absolute;
+  right: calc(100% + 0.5em);
+  white-space: nowrap;
+}
+
+.paper dt {
+  font-weight: 700;
+  float: left;
+  margin-right: 0.5em;
+}
+
+.paper dd {
+  margin-left: 0;
+}
+
+.paper blockquote {
+  margin: 0.8em 2.5em;
+}
+
+.paper .center {
+  text-align: center;
+}
+
+.paper .center p {
+  text-align: center;
+}
+
+.paper .flushright,
+.paper .flushright p {
+  text-align: right;
+}
+
+.paper .flushleft p {
+  text-align: left;
+}
+
+.paper code,
+.paper pre.verbatim {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.86em;
+}
+
+.paper pre.verbatim {
+  white-space: pre-wrap;
+  margin: 0.8em 0;
+}
+
+.paper .smallcaps {
+  font-variant: small-caps;
+}
+
+.paper .sans {
+  font-family: system-ui, sans-serif;
+}
+
+.paper .underline {
+  text-decoration: underline;
+}
+
+.paper .emph .emph {
+  font-style: normal;
+}
+
+.paper .nowrap {
+  white-space: nowrap;
+}
+
+.paper .latex-logo sup {
+  font-size: 0.75em;
+  vertical-align: 0.25em;
+  margin-left: -0.32em;
+  margin-right: -0.12em;
+}
+
+.paper .latex-logo sub {
+  font-size: 1em;
+  vertical-align: -0.5ex;
+  margin-left: -0.15em;
+  margin-right: -0.12em;
+}
+
+.paper hr {
+  border: 0;
+  border-top: 1px solid var(--paper-rule);
+  margin: 1em 0;
+}
+
+.paper .vspace {
+  height: 1em;
+}
+
+.paper .vspace.smallskip {
+  height: 0.33em;
+}
+
+.paper .vspace.medskip {
+  height: 0.66em;
+}
+
+.paper .page-break {
+  margin: 2em -64px;
+  border-top: 1px dashed var(--paper-rule);
+}
+
+.paper table.tabular {
+  border-collapse: collapse;
+  margin: 0.8em auto;
+}
+
+.paper .tabular td {
+  padding: 0.2em 0.6em;
+}
+
+.paper .tabular .align-c {
+  text-align: center;
+}
+
+.paper .tabular .align-r {
+  text-align: right;
+}
+
+.paper .tabular tr.rule-top td {
+  border-top: 1px solid currentColor;
+}
+
+.paper .tabular tr.rule-bottom td {
+  border-bottom: 1px solid currentColor;
+}
+
+.paper figure.float {
+  margin: 1.2em 0;
+  text-align: center;
+}
+
+.paper figcaption {
+  font-size: 0.92em;
+  margin-top: 0.4em;
+}
+
+.paper .image-placeholder {
+  display: inline-block;
+  padding: 1.5em 2em;
+  border: 1px dashed var(--paper-rule);
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+.paper .fn-ref a {
+  text-decoration: none;
+}
+
+.paper .footnotes {
+  margin-top: 2.5em;
+  padding-top: 0.5em;
+  border-top: 1px solid var(--paper-rule);
+  font-size: 0.85em;
+}
+
+.paper .footnotes ol {
+  padding-left: 1.5em;
+}
+
+/* Problems in the source, made visible in the preview. */
+.paper .math-error {
+  color: var(--danger);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  text-decoration: wavy underline;
+  cursor: help;
+}
+
+.paper div.math-error {
+  display: block;
+  text-align: center;
+  margin: 0.8em 0;
+}
+
+.paper .unknown-cmd,
+.paper .ref-missing {
+  color: var(--danger);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  background: rgb(201 42 42 / 8%);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.paper .implicit-math {
+  text-decoration: wavy underline var(--warning);
+  text-underline-offset: 3px;
+}
+
+.paper .env-unknown {
+  border-left: 3px solid var(--warning);
+  padding-left: 0.8em;
+}
+
+/* ───────────────────────────────────────────────────────── small screens */
+
+@media (max-width: 760px) {
+  .brand-name {
+    display: none;
+  }
+
+  /* Header wraps: name/menus on the first row, Source|Preview below. */
+  .app-header {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .doc-name {
+    width: auto;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .app-header .header-spacer {
+    display: none;
+  }
+
+  .view-switch {
+    display: flex;
+    order: 10;
+    width: 100%;
+  }
+
+  .view-switch button {
+    flex: 1;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .source-pane {
+    flex-basis: 100% !important;
+  }
+
+  .app.view-source .preview-pane,
+  .app.view-preview .source-pane {
+    display: none;
+  }
+
+  .palette {
+    position: absolute;
+    z-index: 25;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    box-shadow: var(--shadow);
+  }
+
+  .main {
+    position: relative;
+  }
+
+  .paper {
+    margin: 0;
+    padding: 24px 18px 48px;
+    border: 0;
+    border-radius: 0;
+    font-size: 16px;
+  }
+
+  .paper .page-break {
+    margin: 2em -18px;
+  }
+}
+
+/* ───────────────────────────────────────────────────────── printing = PDF export */
+
+@media print {
+  @page {
+    margin: 2cm;
+  }
+
+  html,
+  body,
+  #root {
+    height: auto;
+    background: #fff !important;
+  }
+
+  .app-header,
+  .toolbar,
+  .palette,
+  .source-pane,
+  .divider,
+  .status-bar,
+  dialog {
+    display: none !important;
+  }
+
+  .app,
+  .main,
+  .panes,
+  .preview-pane {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  .paper {
+    --paper-text: #000;
+    --paper-rule: #999;
+    --link: #000;
+    max-width: none;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: #fff;
+    color: #000;
+    font-size: 11pt;
+  }
+
+  .paper .page-break {
+    break-after: page;
+    border: 0;
+    margin: 0;
+  }
+
+  .paper .thm,
+  .paper .katex-display,
+  .paper table,
+  .paper figure {
+    break-inside: avoid;
+  }
+
+  .paper .math-error,
+  .paper .unknown-cmd {
+    color: #000;
+    background: none;
+  }
+}
