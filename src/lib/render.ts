@@ -47,6 +47,11 @@ export interface RenderResult {
 export interface RenderOptions {
   /** Date used for \today and the default \maketitle date. */
   today?: Date;
+  /**
+   * Marks each top-level block with `data-src="<source offset>"`, so the UI
+   * can find the output for a source position (see `sync.ts`).
+   */
+  sourceAnchors?: boolean;
 }
 
 interface Range {
@@ -243,6 +248,7 @@ class Renderer {
   constructor(
     private readonly src: string,
     private readonly today: Date,
+    private readonly sourceAnchors: boolean,
   ) {}
 
   render(): RenderResult {
@@ -257,7 +263,7 @@ class Renderer {
       body = { start: begin.end, end: end ? end.index : src.length };
     }
 
-    let html = this.flow(body.start, body.end, false);
+    let html = this.flow(body.start, body.end, false, this.sourceAnchors);
 
     if (this.footnotes.length > 0) {
       html +=
@@ -297,19 +303,25 @@ class Renderer {
   /**
    * Renders `[start, end)` as a sequence of paragraphs and blocks. In
    * `inline` mode (command arguments such as \textbf{…}) no <p> wrappers are
-   * produced and paragraph breaks become spaces.
+   * produced and paragraph breaks become spaces. With `stamp`, every block
+   * records the source offset it came from in a `data-src` attribute.
    */
-  private flow(start: number, end: number, inline: boolean): string {
+  private flow(start: number, end: number, inline: boolean, stamp = false): string {
     const { src } = this;
     const out: string[] = [];
+    let i = start;
     let para = "";
+    let paraStart = start;
+    const anchored = (html: string, at: number) =>
+      stamp ? html.replace(/^<[a-zA-Z][\w-]*/, (tag) => `${tag} data-src="${at}"`) : html;
     const flush = () => {
       const t = para.trim();
-      if (t !== "") out.push(`<p>${t}</p>`);
+      if (t !== "") out.push(anchored(`<p>${t}</p>`, paraStart));
       para = "";
     };
     const sink: Sink = {
       text: (html) => {
+        if (para === "") paraStart = i;
         para += html;
       },
       block: (html) => {
@@ -317,7 +329,7 @@ class Renderer {
           para += html;
         } else {
           flush();
-          out.push(html);
+          out.push(anchored(html, i));
         }
       },
       space: () => {
@@ -329,7 +341,6 @@ class Renderer {
       },
     };
 
-    let i = start;
     while (i < end) {
       const ch = src[i]!;
       switch (ch) {
@@ -1282,5 +1293,5 @@ export function parseColumnSpec(spec: string): string[] {
 
 /** Renders a document. Never throws. */
 export function renderDocument(src: string, options: RenderOptions = {}): RenderResult {
-  return new Renderer(src, options.today ?? new Date()).render();
+  return new Renderer(src, options.today ?? new Date(), options.sourceAnchors ?? false).render();
 }
