@@ -150,6 +150,7 @@ export function uniqueName(ws: Workspace, base: string): string {
 // ───────────────────────────────────────────────────────────── preferences
 
 export type ThemePreference = "system" | "light" | "dark";
+export type PreviewSync = "off" | "cursor" | "cursor-scroll";
 
 export interface Preferences {
   theme: ThemePreference;
@@ -166,6 +167,8 @@ export interface Preferences {
   quickSymbols: boolean;
   /** Fraction of the width given to the editor pane (0.2–0.8). */
   splitRatio: number;
+  /** What the preview follows in the source (see sync.ts). */
+  previewSync: PreviewSync;
 }
 
 export const DEFAULT_PREFERENCES: Readonly<Preferences> = {
@@ -177,6 +180,7 @@ export const DEFAULT_PREFERENCES: Readonly<Preferences> = {
   completions: true,
   quickSymbols: true,
   splitRatio: 0.5,
+  previewSync: "cursor",
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -187,6 +191,7 @@ export function parsePreferences(raw: unknown): Preferences {
   if (typeof raw !== "object" || raw === null) return p;
   const r = raw as Record<string, unknown>;
   if (r.theme === "system" || r.theme === "light" || r.theme === "dark") p.theme = r.theme;
+  if (r.previewSync === "off" || r.previewSync === "cursor" || r.previewSync === "cursor-scroll") p.previewSync = r.previewSync;
   if (typeof r.fontSize === "number" && Number.isFinite(r.fontSize)) p.fontSize = clamp(Math.round(r.fontSize), 10, 28);
   if (typeof r.splitRatio === "number" && Number.isFinite(r.splitRatio)) p.splitRatio = clamp(r.splitRatio, 0.2, 0.8);
   for (const key of ["lineNumbers", "autoClose", "suggestions", "completions", "quickSymbols"] as const) {

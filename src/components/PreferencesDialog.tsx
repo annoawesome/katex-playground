@@ -1,6 +1,6 @@
 /** Preferences, in a native modal <dialog>. Changes apply (and save) immediately. */
 import { useEffect, useRef } from "react";
-import type { Preferences, ThemePreference } from "../lib/storage";
+import type { Preferences, PreviewSync, ThemePreference } from "../lib/storage";
 import { formatShortcut } from "./Toolbar";
 
 interface Props {
@@ -15,6 +15,12 @@ const THEMES: Array<[ThemePreference, string]> = [
   ["system", "System"],
   ["light", "Light"],
   ["dark", "Dark"],
+];
+
+const PREVIEW_SYNCS: Array<[PreviewSync, string]> = [
+  ["off", "Off"],
+  ["cursor", "Follow cursor"],
+  ["cursor-scroll", "Cursor + scrolling"],
 ];
 
 const TOGGLES: Array<[keyof Preferences, string, string]> = [
@@ -102,6 +108,19 @@ export function PreferencesDialog({ open, prefs, onChange, onClose, storageBytes
               <input type="checkbox" checked={prefs[key] as boolean} onChange={(e) => set(key, e.target.checked as never)} />
             </label>
           ))}
+        </fieldset>
+
+        <fieldset>
+          <legend>Preview</legend>
+          <div className="segmented" role="radiogroup" aria-label="Preview sync">
+            {PREVIEW_SYNCS.map(([value, label]) => (
+              <label key={value} className={prefs.previewSync === value ? "on" : ""}>
+                <input type="radio" name="previewSync" value={value} checked={prefs.previewSync === value} onChange={() => set("previewSync", value)} />
+                {label}
+              </label>
+            ))}
+          </div>
+          <p className="hint">Scrolls the preview to the part of the document you’re working on.</p>
         </fieldset>
 
         <fieldset>

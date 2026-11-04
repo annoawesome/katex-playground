@@ -39,7 +39,11 @@ import {
   type EditState,
 } from "../lib/editing";
 import { completionContext, filterCompletions, type Completion } from "../lib/completions";
+import { lineAtTop, lineStarts } from "../lib/sync";
 import type { Preferences } from "../lib/storage";
+
+/** Scrolling this soon after caret activity is the caret being revealed, not the user. */
+const CARET_SCROLL_WINDOW_MS = 200;
 
 export interface EditorHandle {
   focus(): void;
@@ -65,6 +69,8 @@ interface EditorProps {
   onDismissSuggestion(): boolean;
   /** Whether the cursor is in math mode (used to wrap math-only inserts). */
   isMathAt(pos: number): boolean;
+  /** Reports the source offset at the top of the view when the user scrolls. */
+  onViewportScroll?(offset: number): void;
   ref?: Ref<EditorHandle>;
 }
 
@@ -77,7 +83,7 @@ interface CompletionState {
   left: number;
 }
 
-export function Editor({ value, onChange, onCursorChange, prefs, onAcceptSuggestion, onDismissSuggestion, isMathAt, ref }: EditorProps) {
+export function Editor({ value, onChange, onCursorChange, prefs, onAcceptSuggestion, onDismissSuggestion, isMathAt, onViewportScroll, ref }: EditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -85,6 +91,13 @@ export function Editor({ value, onChange, onCursorChange, prefs, onAcceptSuggest
   const [completion, setCompletion] = useState<CompletionState | null>(null);
   // Set when an edit wants the caret scrolled into view after the next render.
   const revealCaret = useRef(false);
+  // For telling the user's scrolling apart from the caret being scrolled into view.
+  const lastCaretActivity = useRef(0);
+  const revealedScrollTop = useRef<number | null>(null);
+  const scrollFrame = useRef(0);
+  const markCaretActivity = () => {
+    lastCaretActivity.current = performance.now();
+  };
 
   // ── Highlighting. Lexing is memoised on the text; the per-line HTML is
   // rebuilt when brackets to emphasise change (cheap).
@@ -149,6 +162,10 @@ export function Editor({ value, onChange, onCursorChange, prefs, onAcceptSuggest
   const syncSelection = useCallback(() => {
     const ta = textareaRef.current;
     if (!ta) return;
+    lastCaretActivity.current = performance.now();
+    // The browser has already scrolled to reveal the moved caret; a slow frame
+    // can deliver that scroll event after the time window, so remember where it landed.
+    revealedScrollTop.current = scrollRef.current?.scrollTop ?? null;
     setSelection((s) => (s.start === ta.selectionStart && s.end === ta.selectionEnd ? s : { start: ta.selectionStart, end: ta.selectionEnd }));
   }, []);
 
@@ -206,7 +223,27 @@ export function Editor({ value, onChange, onCursorChange, prefs, onAcceptSuggest
     if (rect.top < scroller.scrollTop + margin) scroller.scrollTop = Math.max(0, rect.top - margin);
     else if (rect.bottom > scroller.scrollTop + scroller.clientHeight - margin)
       scroller.scrollTop = rect.bottom - scroller.clientHeight + margin;
+    revealedScrollTop.current = scroller.scrollTop;
   }, [caretRect]);
+
+  // ── Reporting user scrolling. The browser also scrolls this wrapper by itself
+  // to reveal the caret, so anything right after caret activity is ignored.
+  const starts = useMemo(() => (onViewportScroll ? lineStarts(value) : null), [onViewportScroll, value]);
+  const onScroll = () => {
+    const scroller = scrollRef.current;
+    if (!onViewportScroll || !starts || !scroller || scrollFrame.current) return;
+    if (scroller.scrollTop === revealedScrollTop.current) return;
+    if (performance.now() - lastCaretActivity.current < CARET_SCROLL_WINDOW_MS) return;
+    scrollFrame.current = requestAnimationFrame(() => {
+      scrollFrame.current = 0;
+      const pre = preRef.current;
+      if (!pre) return;
+      const y = scroller.scrollTop;
+      const lineTop = (line: number) => (pre.children[line] as HTMLElement).offsetTop;
+      onViewportScroll(y === 0 ? 0 : (starts[lineAtTop(pre.children.length, lineTop, y)] ?? 0));
+    });
+  };
+  useEffect(() => () => cancelAnimationFrame(scrollFrame.current), []);
 
   // After any render caused by an edit, keep the caret on screen.
   useLayoutEffect(() => {
@@ -309,6 +346,7 @@ export function Editor({ value, onChange, onCursorChange, prefs, onAcceptSuggest
 
   // ── Keyboard handling.
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    markCaretActivity();
     if (e.nativeEvent.isComposing) return; // never interfere with IME input
     const mod = e.metaKey || e.ctrlKey;
     const run = (next: EditState | null) => {
@@ -382,6 +420,7 @@ export function Editor({ value, onChange, onCursorChange, prefs, onAcceptSuggest
 
   const onChangeText = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const ta = e.currentTarget;
+    markCaretActivity();
     onChange(ta.value);
     setSelection({ start: ta.selectionStart, end: ta.selectionEnd });
     revealCaret.current = true;
@@ -401,7 +440,7 @@ export function Editor({ value, onChange, onCursorChange, prefs, onAcceptSuggest
 
   return (
     <div className={`editor${prefs.lineNumbers ? " with-gutter" : ""}`} style={style}>
-      <div className="editor-scroll" ref={scrollRef}>
+      <div className="editor-scroll" ref={scrollRef} onScroll={onScroll}>
         <div className="editor-inner">
           <pre className="editor-highlight" ref={preRef} aria-hidden="true" dangerouslySetInnerHTML={{ __html: html }} />
           <textarea
@@ -411,6 +450,7 @@ export function Editor({ value, onChange, onCursorChange, prefs, onAcceptSuggest
             onChange={onChangeText}
             onKeyDown={onKeyDown}
             onSelect={syncSelection}
+            onPointerDown={markCaretActivity}
             onBlur={() => setCompletion(null)}
             spellCheck={false}
             autoCapitalize="off"

@@ -250,3 +250,42 @@ describe("parseColumnSpec", () => {
     expect(parseColumnSpec("p{3cm}@{}c")).toEqual(["l", "c"]);
   });
 });
+
+describe("source anchors", () => {
+  const anchored = (src: string) => renderDocument(src, { today, sourceAnchors: true }).html;
+  /** Offsets of the `data-src` attributes, in output order. */
+  const anchors = (out: string) => [...out.matchAll(/data-src="(\d+)"/g)].map((m) => Number(m[1]));
+
+  it("is off by default", () => {
+    expect(html("one\n\n\\section{Two}\n\nthree")).not.toContain("data-src");
+  });
+
+  it("points each top-level block at its source, in order", () => {
+    const src = "one\n\n\\section{Two}\n\nthree $x$\n\n\\begin{quote}four\\end{quote}";
+    expect(anchors(anchored(src))).toEqual([src.indexOf("one"), src.indexOf("\\section"), src.indexOf("three"), src.indexOf("\\begin")]);
+  });
+
+  it("offsets are relative to the whole source, past the preamble", () => {
+    const src = "\\title{T}\n\\newcommand{\\x}{y}\n\\begin{document}\nbody\n\\end{document}";
+    expect(anchors(anchored(src))).toEqual([src.indexOf("body")]);
+  });
+
+  it("doesn't stamp nested blocks or footnotes", () => {
+    const src = "a\\footnote{note}\n\n\\begin{quote}\nb\n\nc\n\\end{quote}";
+    const out = anchored(src);
+    expect(anchors(out)).toEqual([0, src.indexOf("\\begin")]);
+    expect(out).toContain('<section class="footnotes">');
+  });
+
+  it("changes nothing else in the output", () => {
+    const docs = [
+      "one\n\n\\section{Two}\n\\begin{theorem}x\\end{theorem}\n\n$$a$$\n\n\\newpage text",
+      "\\begin{itemize}\\item a\\end{itemize}\\footnote{f}\n\n\\begin{align}x\\\\y\\end{align}",
+      "\\begin{ } } { $ \\section \\end{x} %",
+      "{{{\\begin{quote}\n\n",
+    ];
+    for (const src of docs) {
+      expect(anchored(src).replace(/ data-src="\d+"/g, "")).toBe(html(src));
+    }
+  });
+});
