@@ -143,3 +143,17 @@ describe("preferences", () => {
     expect(loadPreferences(storage)).toEqual(prefs);
   });
 });
+
+describe("previewSync preference", () => {
+  it("defaults to following the cursor", () => {
+    expect(parsePreferences({}).previewSync).toBe("cursor");
+  });
+
+  it("accepts every mode and rejects anything else", () => {
+    for (const mode of ["off", "cursor", "cursor-scroll"]) {
+      expect(parsePreferences({ previewSync: mode }).previewSync).toBe(mode);
+    }
+    expect(parsePreferences({ previewSync: "always" }).previewSync).toBe("cursor");
+    expect(parsePreferences({ previewSync: true }).previewSync).toBe("cursor");
+  });
+});

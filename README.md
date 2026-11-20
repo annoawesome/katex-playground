@@ -8,6 +8,7 @@ Write LaTeX-style documents entirely in your browser, typeset live with [KaTeX](
 - **Editing help**: syntax highlighting, line numbers, auto-closing brackets, smart Enter (closes `\begin{…}` and continues `\item` lists), command completion after `\`, comment toggling, and moving or duplicating lines.
 - **Symbols at hand**: a toolbar of common actions and symbols (quantifiers, `\implies`, `\in`, ℝ, …), plus a searchable palette of about 130 symbols and structures.
 - **Lazy-math suggestions**: type `For all a in Z, a is even` or `x > y => x - y > 0` and pause, and the app offers `\(\forall a \in \mathbb{Z}, a \text{ is even}\)`. This is a small rule-based engine; no AI is involved.
+- **Preview sync**: the preview scrolls to the part of the document your cursor is in, and can follow editor scrolling too. Choose Off, Follow cursor or Cursor + scrolling in Preferences (⚙).
 - **Light and dark themes**: follows your OS setting by default, and can be overridden in Preferences (⚙).
 
 Supported LaTeX includes sections, lists, theorem/proof environments, numbered `equation`/`align` with `\label`/`\ref`, footnotes, links, basic `tabular`, and `\newcommand` macros. Everything inside math mode is handled by KaTeX. See [ARCHITECTURE.md](ARCHITECTURE.md) for the full list and for how the app works.

@@ -11,12 +11,13 @@ Katex Playground is a static, frontend-only React app. There is no server: parsi
 5. [The editor](#the-editor-srccomponentseditortsx)
 6. [The document renderer](#the-document-renderer-srclibrenderts)
 7. [Lazy-math suggestions](#lazy-math-suggestions-srclibsuggestts)
-8. [Persistence](#persistence-srclibstoragets)
-9. [Theming](#theming)
-10. [Export](#export-srclibexportingts)
-11. [Testing](#testing)
-12. [Dependencies and supply-chain posture](#dependencies-and-supply-chain-posture)
-13. [Known limitations](#known-limitations)
+8. [Preview sync](#preview-sync-srclibsyncts)
+9. [Persistence](#persistence-srclibstoragets)
+10. [Theming](#theming)
+11. [Export](#export-srclibexportingts)
+12. [Testing](#testing)
+13. [Dependencies and supply-chain posture](#dependencies-and-supply-chain-posture)
+14. [Known limitations](#known-limitations)
 
 ## Overview
 
@@ -54,11 +55,13 @@ src/
     SuggestionBar.tsx      Lazy-math suggestion strip
     PreferencesDialog.tsx  Preferences in a native <dialog>
     Menu.tsx               Small accessible dropdown menu
+    usePreviewSync.ts      Hook that scrolls the preview to follow the source
   lib/
     lexer.ts               Forgiving LaTeX tokenizer + math-region detection
     highlight.ts           Tokens → per-line highlighted HTML
     render.ts              LaTeX-subset → HTML document renderer (uses KaTeX for math)
     suggest.ts             Rule-based "lazy math" suggestion engine
+    sync.ts                Scroll-position decisions for preview sync
     editing.ts             Pure editor operations (indent, auto-close, smart Enter, …)
     completions.ts         Command-completion vocabulary and ranking
     symbols.ts             Palette, quick symbols and toolbar actions (data)
@@ -221,6 +224,16 @@ This is a deterministic, rule-based engine (no AI) that turns "lazy" plain-text 
 
 The UI shows the suggestion after the cursor has rested for 450 ms, with a KaTeX preview of the result. Alt+Enter applies it (as an undoable edit, re-validated against the current text first). Esc dismisses it, and a dismissed suggestion isn't offered again for the same text.
 
+## Preview sync (`src/lib/sync.ts`)
+
+The preview follows the source, one way only (source to preview) and accurate to the block. The `previewSync` preference selects `off`, `cursor` (the default) or `cursor-scroll`.
+
+- **Anchors**: with `sourceAnchors: true`, `renderDocument` adds `data-src="<offset>"` to each top-level block. Attributes are used rather than wrapper elements, so CSS and printing are unaffected. Offsets rise monotonically. The preamble, nested blocks and footnotes have no anchors, so a caret in a footnote maps to the paragraph that references it. The option is off by default, and only `App` turns it on.
+- **Following the caret**: `usePreviewSync` finds the block holding the caret with `blockIndexAt` and asks `caretScrollTarget` where to scroll. It acts only when the block or the text has changed since the last run, which leaves manual scrolling of the preview alone. It waits while `content` and the deferred text differ, because the anchors are stale until the preview catches up. A hidden pane (the mobile source view) resets the state, since it loses its scroll position.
+- **Following scrolling**: `Editor` reports the offset of the line at the top of its view, throttled to one report per frame, and `scrollSyncTarget` interpolates within the block. The browser also scrolls the wrapper natively to reveal the caret, so the editor ignores scroll events within 200 ms of caret activity, and those landing exactly where a selection change or `ensureCaretVisible` left the scroll position. The second check covers slow frames, which can deliver the event after the time window.
+
+Scroll positions are decided by pure functions in `sync.ts`; the hook only reads the DOM and applies them. Moves caused by the caret animate, except for edits, jumps of more than three viewports, and under `prefers-reduced-motion`.
+
 ## Persistence (`src/lib/storage.ts`)
 
 Two `localStorage` keys:
@@ -228,7 +241,7 @@ Two `localStorage` keys:
 | Key | Contents |
 | --- | --- |
 | `katex-playground:workspace` | `{ version: 1, documents: [{ id, name, content, createdAt, updatedAt }], activeId }` |
-| `katex-playground:preferences` | theme, font size, line numbers, auto-close, completions, suggestions, quick symbols, split ratio |
+| `katex-playground:preferences` | theme, font size, line numbers, auto-close, completions, suggestions, quick symbols, split ratio, preview sync |
 
 - **Defensive loading**: `parseWorkspace` and `parsePreferences` validate everything. Malformed documents are dropped, a dangling `activeId` is repaired, numbers are clamped, and corrupt JSON falls back to defaults. Storage that is missing or throws (private modes, sandboxed iframes) yields an in-memory session instead of a crash.
 - **Saving**: debounced, flushed on `pagehide` and `visibilitychange`, and on Mod+S. Quota errors are reported in the status bar.
@@ -255,13 +268,14 @@ Two `localStorage` keys:
 | --- | --- |
 | `lexer.test.ts` | token types, full coverage of input, comments/escapes, math ranges for all delimiters and environments, unterminated math |
 | `highlight.test.ts` | line splitting, escaping, math/match classes |
-| `render.test.ts` | paragraphs, escaping/XSS, ligatures, styling, accents, link-scheme filtering, all math delimiters, KaTeX error offsets, macros, equation/align numbering and refs, sections, lists, theorems, proofs, footnotes, verbatim, tabular, diagnostics, garbage input never throws |
+| `sync.test.ts` | block lookup, every scroll-target branch, interpolation, line mapping |
+| `render.test.ts` | source anchors, paragraphs, escaping/XSS, ligatures, styling, accents, link-scheme filtering, all math delimiters, KaTeX error offsets, macros, equation/align numbering and refs, sections, lists, theorems, proofs, footnotes, verbatim, tabular, diagnostics, garbage input never throws |
 | `suggest.test.ts` | both examples from the spec, many operator/phrase conversions, trimming rules, article heuristic, prose that must *not* trigger, math-mode fixes, clause selection around the cursor |
 | `editing.test.ts` | every editing operation, written as readable `"before|" → "after|"` cursor strings |
 | `storage.test.ts` | defaults, round-trips, corrupt data, quota errors, workspace operations, preference validation |
 | `misc.test.ts` | completion context and ranking, theme resolution, file names, and a check that every palette item is valid KaTeX |
 
-The React components were verified manually in a browser: overlay alignment on wrapped lines, undo after programmatic edits, completions, suggestions, palette insertion, themes and the mobile layout.
+The React components were verified manually in a browser: overlay alignment on wrapped lines, undo after programmatic edits, completions, suggestions, palette insertion, preview sync, themes and the mobile layout.
 
 ## Dependencies and supply-chain posture
 

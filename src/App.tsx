@@ -17,6 +17,7 @@ import { Palette } from "./components/Palette";
 import { SuggestionBar } from "./components/SuggestionBar";
 import { PreferencesDialog } from "./components/PreferencesDialog";
 import { Menu, type MenuEntry } from "./components/Menu";
+import { usePreviewSync } from "./components/usePreviewSync";
 import { lex, mathRangeAt } from "./lib/lexer";
 import { renderDocument } from "./lib/render";
 import { suggestAt, type Suggestion } from "./lib/suggest";
@@ -66,6 +67,8 @@ export function App() {
   const editorRef = useRef<EditorHandle>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
+  const previewPaneRef = useRef<HTMLElement>(null);
+  const paperRef = useRef<HTMLElement>(null);
 
   const active = workspace.documents.find((d) => d.id === workspace.activeId) ?? workspace.documents[0]!;
   const content = active.content;
@@ -139,9 +142,20 @@ export function App() {
   // ── Rendering. useDeferredValue keeps typing responsive on big documents:
   // React renders the preview at lower priority than the keystroke.
   const deferredContent = useDeferredValue(content);
-  const rendered = useMemo(() => renderDocument(deferredContent), [deferredContent]);
+  const rendered = useMemo(() => renderDocument(deferredContent, { sourceAnchors: true }), [deferredContent]);
   const mathRanges = useMemo(() => lex(content).mathRanges, [content]);
   const isMathAt = useCallback((pos: number) => mathRangeAt(mathRanges, pos) !== null, [mathRanges]);
+
+  const onEditorScroll = usePreviewSync({
+    paneRef: previewPaneRef,
+    paperRef,
+    caret: cursor.end,
+    content,
+    renderedContent: deferredContent,
+    mode: prefs.previewSync,
+    documentId: active.id,
+    view: mobileView,
+  });
 
   // ── Lazy-math suggestions, computed once the cursor rests.
   useEffect(() => {
@@ -346,6 +360,7 @@ export function App() {
               onAcceptSuggestion={applySuggestion}
               onDismissSuggestion={dismissSuggestion}
               isMathAt={isMathAt}
+              onViewportScroll={prefs.previewSync === "cursor-scroll" ? onEditorScroll : undefined}
             />
             {suggestion && <SuggestionBar suggestion={suggestion} onApply={applySuggestion} onDismiss={dismissSuggestion} />}
           </section>
@@ -362,8 +377,8 @@ export function App() {
             onKeyDown={onDividerKey}
             onDoubleClick={() => setPrefs((p) => ({ ...p, splitRatio: 0.5 }))}
           />
-          <section className="pane preview-pane" aria-label="Preview">
-            <article className="paper" dangerouslySetInnerHTML={{ __html: rendered.html }} />
+          <section className="pane preview-pane" ref={previewPaneRef} aria-label="Preview">
+            <article className="paper" ref={paperRef} dangerouslySetInnerHTML={{ __html: rendered.html }} />
           </section>
         </div>
       </div>
